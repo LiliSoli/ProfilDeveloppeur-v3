@@ -1,31 +1,61 @@
-# Profil développeur – v2
+# Profil développeur intéractif – v3
 
-Application Jetpack Compose qui affiche le profil d'une développeuse : avatar avec badge de disponibilité, nom, rôle, description, compétences, contact, bouton « Me contacter » et liste de projets. Les données sont locales.
+Application Jetpack Compose qui affiche le profil d'une développeuse.
+La v3 implémente la recherche d'un projet par son titre, sa description ou une de ses technologies, l'ajout ou le retrait des projets en favori, l'affichage des favoris et le compteur des projets selon la sélection.
+Les données sont locales.
 
-## Composants Compose
+## États gérés par l'application
 
-Text, Button, Icon, Image, Card, OutlinedTextField (lecture seule).
+- texte de recherche
+- filtre des favoris
+- identifiants des projets favoris
+- liste des projets affichés
 
-## Layouts
+## État local
 
-- **Column** : structure de la carte de profil
-- **Row** : avatar et nom sur la même ligne
-- **Box** : badge de disponibilité superposé sur l'avatar
-- **Spacer** : espaces entre les éléments
-- **Surface** : fond de l'écran et badge
+L'affichage des informations de contact est géré directement dans `ProfileCardContent`. L'affichage du contact ne sert qu'à la carte de profil, je l'ai donc laissé dans le composable avec `rememberSaveable`, au lieu de le mettre dans le ViewModel.
 
-## Liste avec LazyColumn
+## State Hoisting
 
-L'écran est une `LazyColumn` : `item` affiche la carte de profil et le titre, `items` affiche chaque projet de `sampleProjects()` avec le composable réutilisable `ProjectCard`.
+`ProfileScreen` peut être défini comme stateless puisqu'il ne garde aucun état. Il reçoit en paramètres ce qu'il doit afficher et transmet les actions de l'utilisateur.
 
-## Choix de thème
+## ViewModel
 
-Le thème suit la démarche du TP7 : mêmes rôles de couleurs, mêmes arrondis et mêmes styles de titres, avec une palette bleue en clair et en sombre. Tous les composants utilisent MaterialTheme.colorScheme, typography et shapes
+`ProfileViewModel` gère l'état principal de l'écran. C'est lui qui définit la liste à afficher et actualise l'état selon chaque action de l'utilisateur.
 
-## Capture d'écran
+## StateFlow
 
-![Thème clair et sombre](capture2.png)
+Avec `MutableStateFlow`(privé), le ViewModel est le seul à pouvoir modifier l'état. L'écran ne peut pas modifier l'état mais ne peut que le lire, avec `StateFlow` public.
+Quand l'utilisateur fait une action, le ViewModel crée un nouvel état avec `update` et `copy`.
+Le container l'observe avec `collectAsState()` et Compose met à jour l'écran avec les nouvelles valeurs selon l'état.
 
-## Quelles notions du chapitre Compose UI avez-vous réutilisées ?
+```
+ProfileViewModel
+     │ publie un état (StateFlow)
+     ▼
+ProfileContainer
+     │ collecte l'état (collectAsState)
+     ▼
+ProfileScreen
+     │ action de l'utilisateur
+     ▼
+ProfileViewModel
+```
 
-Les composants fondamentaux, les layouts, une liste avec `LazyColumn`, la personnalisation Material Design 3 (couleurs, typographie, formes, thème clair et sombre). L'écran est découpé en petits composables réutilisables, avec leurs données et un modifier en paramètres, et son rendu est vérifié avec des previews.
+## Organisation du code
+
+- `ProfileViewModel` : gère l'état et les actions
+- `ProfileUiState` : l'état de l'écran
+- `ProfileContainer` : relie le ViewModel à l'écran
+- `ProfileScreen` : affiche l'écran, sans état
+- `ProfileCard` : la carte de profil, avec l'état local du contact
+- `ProjectCard` : la carte d'un projet, avec son bouton favori
+- `ProjectSearchField` : le champ de recherche
+
+## Captures d'écran
+
+![Profil avec les informations de contact affichées](screenshots/profil.png)
+
+![Recherche et filtre favoris actifs](screenshots/projets.png)
+
+![Démo de l'application](screenshots/demo.gif)
