@@ -52,10 +52,16 @@ ProfileViewModel
 - `ProjectCard` : la carte d'un projet, avec son bouton favori
 - `ProjectSearchField` : le champ de recherche
 
+## Démo vidéo
+
+*Cliquez sur la démo pour la lancer si elle ne démarre pas automatiquement.*
+
+![Démo de l'application](screenshots/demo.gif)
+
 ## Captures d'écran
 
 ![Profil avec les informations de contact affichées](screenshots/profil.png)
 
 ![Recherche et filtre favoris actifs](screenshots/projets.png)
 
-![Démo de l'application](screenshots/demo.gif)
+
