@@ -43,7 +43,8 @@ import androidx.compose.material3.CardDefaults
 data class ProjectUi(
     val id: Int,
     val title: String,
-    val description: String
+    val description: String,
+    val technologies: List<String>
 )
 
 fun sampleProjects(): List<ProjectUi> {
@@ -51,17 +52,32 @@ fun sampleProjects(): List<ProjectUi> {
         ProjectUi(
             id = 1,
             title = "GreenCork",
-            description = "Application web B2B pour un importateur de vins"
+            description = "Application web B2B pour un importateur de vins",
+            technologies = listOf("Spring Boot", "Next.js")
         ),
         ProjectUi(
             id = 2,
             title = "Notae",
-            description = "Projet de groupe réalisé pendant la formation CDA"
+            description = "Projet de groupe réalisé pendant la formation CDA",
+            technologies = listOf("Spring Boot", "Next.js")
         ),
         ProjectUi(
             id = 3,
             title = "Profil développeur",
-            description = "Application Android avec Jetpack Compose"
+            description = "Application Android avec Jetpack Compose",
+            technologies = listOf("Kotlin", "Jetpack Compose")
+        ),
+        ProjectUi(
+            id = 4,
+            title = "Product Explorer",
+            description = "Catalogue de produits Android réalisé en TP",
+            technologies = listOf("Kotlin", "Jetpack Compose", "ViewModel")
+        ),
+        ProjectUi(
+            id = 5,
+            title = "Migration MySQL vers MongoDB",
+            description = "Batch de migration de données réalisé en alternance",
+            technologies = listOf("Java", "Spring Batch", "MySQL", "MongoDB")
         )
     )
 }
@@ -366,6 +382,12 @@ fun ProjectCard(
                 text = project.description,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.secondary
+            )
+            Text(
+                text = project.technologies.joinToString(" · "),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
     }
