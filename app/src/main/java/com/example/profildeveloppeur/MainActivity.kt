@@ -38,12 +38,22 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CardDefaults
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 data class ProjectUi(
     val id: Int,
     val title: String,
-    val description: String
+    val description: String,
+    val technologies: List<String>
 )
 
 fun sampleProjects(): List<ProjectUi> {
@@ -51,23 +61,72 @@ fun sampleProjects(): List<ProjectUi> {
         ProjectUi(
             id = 1,
             title = "GreenCork",
-            description = "Application web B2B pour un importateur de vins"
+            description = "Application web B2B pour un importateur de vins",
+            technologies = listOf("Spring Boot", "Next.js")
         ),
         ProjectUi(
             id = 2,
             title = "Notae",
-            description = "Projet de groupe réalisé pendant la formation CDA"
+            description = "Projet de groupe réalisé pendant la formation CDA",
+            technologies = listOf("Spring Boot", "Next.js")
         ),
         ProjectUi(
             id = 3,
             title = "Profil développeur",
-            description = "Application Android avec Jetpack Compose"
+            description = "Application Android avec Jetpack Compose",
+            technologies = listOf("Kotlin", "Jetpack Compose")
+        ),
+        ProjectUi(
+            id = 4,
+            title = "Product Explorer",
+            description = "Catalogue de produits Android réalisé en TP",
+            technologies = listOf("Kotlin", "Jetpack Compose", "ViewModel")
+        ),
+        ProjectUi(
+            id = 5,
+            title = "Migration MySQL vers MongoDB",
+            description = "Batch de migration de données réalisé en alternance",
+            technologies = listOf("Java", "Spring Batch", "MySQL", "MongoDB")
         )
     )
 }
 
 fun sampleSkills(): List<String> {
     return listOf("Java", "Spring Boot", "React", "Kotlin", "Compose")
+}
+
+data class ProfileUiState(
+    val projects: List<ProjectUi> = emptyList(),
+    val searchQuery: String = ""
+)
+
+class ProfileViewModel : ViewModel() {
+
+    private val allProjects: List<ProjectUi> = sampleProjects()
+
+    private val _uiState = MutableStateFlow(
+        ProfileUiState(projects = allProjects)
+    )
+    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
+
+    private fun filterProjects(searchQuery: String): List<ProjectUi> {
+        return allProjects.filter { project ->
+            project.title.contains(searchQuery, ignoreCase = true) ||
+                    project.description.contains(searchQuery, ignoreCase = true) ||
+                    project.technologies.any { technology ->
+                        technology.contains(searchQuery, ignoreCase = true)
+                    }
+        }
+    }
+
+    fun onSearchQueryChange(newValue: String) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                searchQuery = newValue,
+                projects = filterProjects(newValue)
+            )
+        }
+    }
 }
 
 class MainActivity : ComponentActivity() {
@@ -77,7 +136,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             ProfilDeveloppeurTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ProfileScreen(
+                    ProfileContainer(
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -87,7 +146,27 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun ProfileScreen(modifier: Modifier = Modifier) {
+fun ProfileContainer(
+    modifier: Modifier = Modifier,
+    viewModel: ProfileViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    ProfileScreen(
+        projects = uiState.projects,
+        searchQuery = uiState.searchQuery,
+        onSearchQueryChange = viewModel::onSearchQueryChange,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun ProfileScreen(
+    projects: List<ProjectUi>,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+){
     Surface(
         color = MaterialTheme.colorScheme.background,
         modifier = modifier.fillMaxSize()
@@ -117,8 +196,15 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                     color = MaterialTheme.colorScheme.primary
                 )
             }
+            item {
+                ProjectSearchField(
+                    query = searchQuery,
+                    onQueryChange = onSearchQueryChange,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
             items(
-                items = sampleProjects(),
+                items = projects,
                 key = { project -> project.id }
             ) { project ->
                 ProjectCard(project = project)
@@ -367,10 +453,33 @@ fun ProjectCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.secondary
             )
+            Text(
+                text = project.technologies.joinToString(" · "),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
     }
 }
 
+@Composable
+fun ProjectSearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        label = { Text(text = "Rechercher un projet ou une techno") },
+        leadingIcon = {
+            Icon(imageVector = Icons.Default.Search, contentDescription = null)
+        },
+        singleLine = true,
+        modifier = modifier
+    )
+}
 
 @Preview(
     showBackground = true,
@@ -379,7 +488,11 @@ fun ProjectCard(
 @Composable
 fun ProfileScreenLightPreview() {
     ProfilDeveloppeurTheme(darkTheme = false) {
-        ProfileScreen()
+        ProfileScreen(
+            projects = sampleProjects(),
+            searchQuery = "",
+            onSearchQueryChange = {}
+        )
     }
 }
 
@@ -390,7 +503,11 @@ fun ProfileScreenLightPreview() {
 @Composable
 fun ProfileScreenDarkPreview() {
     ProfilDeveloppeurTheme(darkTheme = true) {
-        ProfileScreen()
+        ProfileScreen(
+            projects = sampleProjects(),
+            searchQuery = "",
+            onSearchQueryChange = {}
+        )
     }
 }
 
